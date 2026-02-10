@@ -65,9 +65,7 @@ NTSTATUS handler::write_process_memory(copy_process_memory_packet* input) {
 		if (!physical_address)
 			return STATUS_UNSUCCESSFUL;
 
-		size_t bytes_transfered = 0;
-		if (!utils::physical_memory::write(buffer, (void*)physical_address, size_to_write,
-			&bytes_transfered) || size_to_write != bytes_transfered)
+		if (!utils::physical_memory::write(buffer, (void*)physical_address, size_to_write))
 			return STATUS_UNSUCCESSFUL;
 
 		size -= size_to_write;
