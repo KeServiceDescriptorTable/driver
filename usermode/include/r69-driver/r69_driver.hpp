@@ -39,10 +39,12 @@ public:
 
 	bool query_process_data(uint32_t process_id, query_process_data_packet* output_data);
 
-	const query_process_data_packet* get_attached_process() const;
-private:
 	uint32_t get_process_id(std::wstring process_name) const;
 
+	uint64_t get_process_module_base(std::wstring module_name);
+
+	const query_process_data_packet* get_attached_process() const;
+private:
 	NTSTATUS issue_syscall(c_packet* packet);
 
 	query_process_data_packet m_process_data = {};

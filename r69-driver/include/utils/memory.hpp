@@ -26,10 +26,8 @@ namespace utils {
 		template <typename T>
 		static inline T read(void* src) {
 			T buffer = {};
-			if (!read(src, &buffer, sizeof(T))) {
-				DbgPrint("(+) failed read");
+			if (!read(src, &buffer, sizeof(T)))
 				return T{};
-			}
 
 			return buffer;
 		}

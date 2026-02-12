@@ -66,11 +66,18 @@ bool utils::virtual_memory::read(void* src, void* dst, const size_t size,
     if (!src || !dst || !size)
         return false;
 
+    size_t temp_bytes_transferred = 0;
+
     MM_COPY_ADDRESS mm_copy_address = {};
     mm_copy_address.VirtualAddress = src;
-    return NT_SUCCESS(MmCopyMemory(dst, mm_copy_address, size,
+    const auto status = NT_SUCCESS(MmCopyMemory(dst, mm_copy_address, size,
         MM_COPY_MEMORY_VIRTUAL,
-        bytes_transferred));
+        &temp_bytes_transferred));
+
+    if (bytes_transferred)
+        *bytes_transferred = temp_bytes_transferred;
+
+    return status;
 }
 
 bool utils::virtual_memory::write(void* src, void* dst, const size_t size,
@@ -78,19 +85,24 @@ bool utils::virtual_memory::write(void* src, void* dst, const size_t size,
     if (!src || !dst || !size)
         return false;
 
+    size_t temp_bytes_transferred = 0;
+
     MM_COPY_ADDRESS mm_copy_address = {};
     mm_copy_address.VirtualAddress = src;
-    return NT_SUCCESS(MmCopyMemory(dst, mm_copy_address, size,
+    const auto status = NT_SUCCESS(MmCopyMemory(dst, mm_copy_address, size,
         MM_COPY_MEMORY_VIRTUAL,
-        bytes_transferred));
+        &temp_bytes_transferred));
+
+    if (bytes_transferred)
+        *bytes_transferred = temp_bytes_transferred;
+
+    return status;
 }
 
 bool utils::virtual_memory::read(void* src, void* dst, const size_t size) {
-    uint64_t bytes_transfered = 0;
-    return read(src, dst, size, &bytes_transfered);
+    return read(src, dst, size, nullptr);
 }
 
 bool utils::virtual_memory::write(void* src, void* dst, const size_t size) {
-    uint64_t bytes_transfered = 0;
-    return write(src, dst, size, &bytes_transfered);
+    return write(src, dst, size, nullptr);
 }

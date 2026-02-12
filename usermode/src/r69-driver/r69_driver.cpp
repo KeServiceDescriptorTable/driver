@@ -1,4 +1,4 @@
-#include <r69-driver/r69_driver.hpp>
+﻿#include <r69-driver/r69_driver.hpp>
 
 c_r69::~c_r69() {
 	detach();
@@ -81,6 +81,42 @@ uint32_t c_r69::get_process_id(std::wstring process_name) const {
 	}
 
 	CloseHandle(snapshot_handle);
+	return 0;
+}
+
+uint64_t c_r69::get_process_module_base(std::wstring target_name) {
+	const auto peb = read<PEB>((uint64_t)m_process_data.peb);
+	const auto ldr = read<PEB_LDR_DATA>((uint64_t)peb.Ldr);
+
+	const auto list_head = (uint64_t)peb.Ldr + offsetof(PEB_LDR_DATA, InMemoryOrderModuleList);
+	auto list_entry = (uint64_t)ldr.InMemoryOrderModuleList.Flink;
+
+	while (list_entry != list_head) {
+		const auto entry_va = list_entry - offsetof(LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
+		auto entry = read<LDR_DATA_TABLE_ENTRY>(entry_va);
+
+		auto module_string = read<UNICODE_STRING>(entry_va + offsetof(LDR_DATA_TABLE_ENTRY, FullDllName));
+
+		std::wstring wstring_buffer;
+		wstring_buffer.resize(module_string.Length * sizeof(wchar_t));
+
+		if (!read((uint64_t)module_string.Buffer, wstring_buffer.data(), wstring_buffer.size())) {
+			list_entry = read<uint64_t>(list_entry);
+			continue;
+		}
+
+		auto it = std::search(
+			wstring_buffer.begin(), wstring_buffer.end(),
+			target_name.begin(), target_name.end(),
+			[](wchar_t a, wchar_t b) { return std::towlower(a) == std::towlower(b); }
+		);
+
+		if (it != wstring_buffer.end())
+			return (uint64_t)entry.DllBase;
+
+		list_entry = read<uint64_t>(list_entry);
+	}
+
 	return 0;
 }
 

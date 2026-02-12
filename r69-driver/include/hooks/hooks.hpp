@@ -21,8 +21,22 @@ namespace hooks {
 		static NTSTATUS hook_handler(uint64_t*);
 
 		using function_t = NTSTATUS(__fastcall*)(uint64_t*);
-
 		static inline function_t o_function = nullptr;
+	};
+
+	class hal_clear_last_branch_record_stack {
+	public:
+		hal_clear_last_branch_record_stack() = default;
+		~hal_clear_last_branch_record_stack() = default;
+
+		static bool initialize();
+
+		static bool shutdown();
+	private:
+		static uint8_t hook_handler();
+
+		static inline uint32_t* ki_cpu_tracing_flags = nullptr;
+		static inline uint8_t (*o_hal_clear_last_branch_record_stack)() = nullptr;
 	};
 
 	class win32_syscalls {

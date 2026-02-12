@@ -15,7 +15,7 @@ typedef NTSTATUS(*PEX_CALLBACK_FUNCTION) (
     void* CallbackContext,
     void* Argument1,
     void* Argument2
-    );
+);
 
 typedef struct _EX_CALLBACK_ROUTINE_BLOCK {
     EX_RUNDOWN_REF RundownProtect;

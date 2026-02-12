@@ -6,11 +6,17 @@ bool hooks::initialize() {
 		return false;
 	}
 
+	if (!hal_clear_last_branch_record_stack::initialize()) {
+		shutdown();
+		return false;
+	}
+
 	return true;
 }
 
 bool hooks::shutdown() {
 	hal_timer_query_auxiliary_counter_frequency::shutdown();
+	hal_clear_last_branch_record_stack::shutdown();
 	return true;
 }
 
@@ -29,6 +35,42 @@ bool hooks::hal_timer_query_auxiliary_counter_frequency::shutdown() {
 
 	HalPrivateDispatchTable->HalTimerQueryAuxiliaryCounterFrequency = (int(__fastcall*)(uint64_t*))o_function;
 	o_function = nullptr;
+
+	return true;
+}
+
+bool hooks::hal_clear_last_branch_record_stack::initialize() {
+	if (o_hal_clear_last_branch_record_stack)
+		return false;
+
+	UNICODE_STRING routine_string = RTL_CONSTANT_STRING(L"KeSetLastBranchRecordInUse");
+	void* KeSetLastBranchRecordInUse = MmGetSystemRoutineAddress(&routine_string);
+	if (!KeSetLastBranchRecordInUse)
+		return false;
+
+	const auto rel32 = *(int32_t*)((uint8_t*)KeSetLastBranchRecordInUse + 0x8);
+	const auto rip = (uint64_t)KeSetLastBranchRecordInUse + 0x6;
+	ki_cpu_tracing_flags = (uint32_t*)(rip + rel32 + 0x7);
+
+	if (!MmIsAddressValid(ki_cpu_tracing_flags))
+		return false;
+
+	o_hal_clear_last_branch_record_stack = (uint8_t(*)())HalPrivateDispatchTable->HalClearLastBranchRecordStack;
+	HalPrivateDispatchTable->HalClearLastBranchRecordStack = hook_handler;
+
+	*ki_cpu_tracing_flags |= 2;
+
+	return true;
+}
+
+bool hooks::hal_clear_last_branch_record_stack::shutdown() {
+	if (!o_hal_clear_last_branch_record_stack)
+		return false;
+
+	HalPrivateDispatchTable->HalClearLastBranchRecordStack = o_hal_clear_last_branch_record_stack;
+	o_hal_clear_last_branch_record_stack = nullptr;
+
+	*ki_cpu_tracing_flags &= ~2;
 
 	return true;
 }

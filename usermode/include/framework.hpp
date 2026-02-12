@@ -2,6 +2,7 @@
 #define framework_hpp
 
 #include <Windows.h>
+#include <winternl.h>
 #include <iostream>
 #include <tlhelp32.h>
 #include <cstdint>
@@ -15,7 +16,8 @@
 #include <functional>
 #include <map>
 #include <chrono>
-#include <cstdint>
+#include <algorithm>
+#include <cwctype>
 #include <cstdio>
 
 #endif // !framework_hpp
